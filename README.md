@@ -1,62 +1,94 @@
 # State Engine
 
-A lightweight, deterministic evaluation layer that converts intelligence events into system state with full trace_id continuity across the SVACS pipeline.
+Deterministic backend layer that converts `intelligence_event` into a stable `state_event` for UI and Mitra consumption.
 
 ## Pipeline Position
 
+```text
+signal -> perception -> NICAI -> Sanskar -> State Engine -> Bucket -> InsightFlow -> UI/Mitra
 ```
-Acoustic Node → Samachar → NICAI → Sanskar → STATE ENGINE → Bucket → InsightFlow → Dashboard
+
+## Responsibility Boundary
+
+- Accept the upstream `intelligence_event` unchanged.
+- Preserve the incoming `trace_id`; never generate a new one.
+- Map `risk_level` into a deterministic system `state`.
+- Force `state=CRITICAL` when `anomaly_flag=True`.
+- Emit a minimal downstream `state_event`.
+
+The State Engine does not rewrite upstream explanation text and does not generate user-facing explanation.
+
+## Contracts
+
+### Input: `intelligence_event`
+
+```json
+{
+  "trace_id": "TRACE-001",
+  "vessel_type": "cargo",
+  "confidence": 0.94,
+  "risk_level": "LOW",
+  "anomaly_flag": false,
+  "explanation": "Routine cargo route with no hostile indicators."
+}
 ```
 
-## Architecture
+### Output: `state_event`
 
-| Module | Responsibility |
+```json
+{
+  "trace_id": "TRACE-001",
+  "vessel_type": "cargo",
+  "risk_level": "LOW",
+  "state": "NORMAL",
+  "anomaly_flag": false,
+  "timestamp": "2026-04-29T00:00:00+00:00",
+  "short_label": "Safe"
+}
+```
+
+## Locked Mapping
+
+| `risk_level` | `state` |
 |---|---|
-| `schemas/state_event.py` | Pydantic v2 models (IntelligenceEvent, StateEvent, TraceError, BucketLogEntry) |
-| `trace_validator.py` | Validates trace_id presence — rejects None/empty/whitespace |
-| `bucket_logger.py` | Mandatory JSONL audit logging (incoming, outgoing, trace errors) |
-| `emitter.py` | Passive InsightFlow emission (state, latency, trace_id) |
-| `state_engine.py` | Core engine — orchestrates validation → state assignment → logging → emission |
-| `main.py` | CLI entry point with demo mode and single-event mode |
-
-## State Mapping
-
-Deterministic 1:1 mapping — no dynamic thresholds, no randomness:
-
-| risk_level | → state |
-|---|---|
-| `LOW` | `LOW` |
-| `MEDIUM` | `MEDIUM` |
-| `HIGH` | `HIGH` |
+| `LOW` | `NORMAL` |
+| `MEDIUM` | `WARNING` |
+| `HIGH` | `ALERT` |
 | `CRITICAL` | `CRITICAL` |
+
+Override rule:
+
+```text
+anomaly_flag=True -> state=CRITICAL
+```
+
+## Files
+
+| File | Responsibility |
+|---|---|
+| `state_engine.py` | Deterministic mapping from intelligence to state |
+| `trace_validator.py` | Explicit trace validation and continuity enforcement |
+| `bucket_logger.py` | Append-only JSONL audit logs |
+| `schemas/state_event.py` | Pydantic contracts for input/output/log entries |
+| `main.py` | Five-scenario integration demo and sample export |
+| `tests/test_state_engine.py` | Locked mapping, trace, and logging tests |
 
 ## Quick Start
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Run demo (5 sample events)
 python main.py
-
-# Process a single event
-python main.py event.json
-
-# Run tests
 pytest tests/ -v
 ```
 
-## Bucket Logs
+Running `python main.py` exports:
 
-All events are logged to `logs/bucket.jsonl` in append-only JSONL format:
-- `incoming` — raw intelligence_event received
-- `outgoing` — state_event produced and emitted
-- `trace_error` — event rejected due to invalid trace_id
+- `samples/state_engine_runs.json`
+- `samples/trace_continuity_proof.json`
+- `samples/bucket_logs.jsonl`
 
-## Failure Conditions (Hard Boundaries)
+## Failure Policy
 
-- ❌ No calls to RAJYA / SAARTHI
-- ❌ No enforcement logic
-- ❌ No upstream schema modification
-- ❌ No missing trace_id propagation
-- ❌ No skipping Bucket logging
+- Invalid or missing `trace_id` raises an explicit error after logging `trace_error`.
+- Any trace mismatch across the pipeline raises an explicit error.
+- No silent failures.

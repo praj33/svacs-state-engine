@@ -5,7 +5,7 @@ Mandatory logging layer — every event (incoming, outgoing, trace errors) is
 persisted to a JSONL file for full auditability.
 
 Each log entry includes:
-  trace_id | input | output | timestamp
+  trace_id | input | output | state | timestamp
 """
 
 from __future__ import annotations
@@ -16,6 +16,13 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from schemas.state_event import BucketLogEntry
+
+
+def _entry_to_json(entry: BucketLogEntry) -> str:
+    dump_json = getattr(entry, "model_dump_json", None)
+    if callable(dump_json):
+        return dump_json()
+    return entry.json()
 
 
 class BucketLogger:
@@ -82,10 +89,29 @@ class BucketLogger:
         self._write(entry)
         return entry
 
+    def log_state_stage(
+        self,
+        trace_id: str,
+        state: str,
+    ) -> BucketLogEntry:
+        """Log the explicit state-engine stage output required for trace proof."""
+        entry = BucketLogEntry(
+            log_type="state_stage",
+            trace_id=trace_id,
+            stage="state_engine",
+            state=state,
+            input=None,
+            output=None,
+            error=None,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
+        self._write(entry)
+        return entry
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
 
     def _write(self, entry: BucketLogEntry) -> None:
         with open(self.log_path, "a", encoding="utf-8") as fh:
-            fh.write(entry.json() + "\n")
+            fh.write(_entry_to_json(entry) + "\n")

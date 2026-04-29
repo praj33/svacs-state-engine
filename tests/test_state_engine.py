@@ -1,14 +1,11 @@
 """
-State Engine — Test Suite
+State Engine - Test Suite
 =========================
-Covers all required scenarios:
-  1. Normal flow (all risk levels)
-  2. Missing trace_id
-  3. Empty trace_id
-  4. Anomaly case
-  5. Low confidence case
-  6. Determinism guarantee
-  7. Bucket logging verification
+Validates the locked transformation contract:
+  1. risk_level -> state mapping
+  2. anomaly override -> CRITICAL
+  3. trace_id preservation and explicit failures
+  4. stable state_event output for UI and Mitra
 """
 
 from __future__ import annotations
@@ -16,21 +13,20 @@ from __future__ import annotations
 import json
 import os
 import sys
-import tempfile
 
 import pytest
 
-# Ensure project root is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from schemas.state_event import IntelligenceEvent, StateEvent, TraceError, RiskLevel
-from trace_validator import validate_trace
+from schemas.state_event import IntelligenceEvent, RiskLevel, StateEvent, SystemState
 from state_engine import StateEngine
+from trace_validator import (
+    TraceContinuityError,
+    TraceValidationError,
+    ensure_trace_chain,
+    validate_trace,
+)
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def engine(tmp_path):
@@ -59,160 +55,162 @@ def _make_event(**overrides) -> IntelligenceEvent:
     return IntelligenceEvent(**defaults)
 
 
-# ---------------------------------------------------------------------------
-# 1. Normal Flow — all four risk levels
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("level", ["LOW", "MEDIUM", "HIGH", "CRITICAL"])
-def test_normal_flow(engine, level):
-    """Each risk_level must produce the matching state, with trace_id preserved."""
-    event = _make_event(risk_level=level, trace_id=f"TRACE-{level}")
+@pytest.mark.parametrize(
+    ("risk_level", "expected_state", "expected_label"),
+    [
+        ("LOW", SystemState.NORMAL, "Safe"),
+        ("MEDIUM", SystemState.WARNING, "Watch"),
+        ("HIGH", SystemState.ALERT, "Concern"),
+        ("CRITICAL", SystemState.CRITICAL, "Threat"),
+    ],
+)
+def test_locked_state_mapping(engine, risk_level, expected_state, expected_label):
+    """Each allowed risk level must map to the locked system state."""
+    event = _make_event(risk_level=risk_level, trace_id=f"TRACE-{risk_level}")
     result = engine.process(event)
 
     assert isinstance(result, StateEvent)
-    assert result.trace_id == f"TRACE-{level}"
-    assert result.risk_level == RiskLevel(level)
-    assert result.state == RiskLevel(level)          # deterministic mirror
-    assert result.vessel_type == "cargo"
-    assert result.confidence == 0.90
-    assert result.timestamp                          # non-empty
+    assert result.trace_id == f"TRACE-{risk_level}"
+    assert result.risk_level == RiskLevel(risk_level)
+    assert result.state == expected_state
+    assert result.short_label == expected_label
+    assert result.anomaly_flag is False
 
 
-# ---------------------------------------------------------------------------
-# 2. Missing trace_id → rejection
-# ---------------------------------------------------------------------------
+def test_state_event_contract_is_ui_safe(engine):
+    """state_event should only expose the stable downstream fields."""
+    result = engine.process(_make_event())
 
-def test_missing_trace_id(engine):
-    """None trace_id must be rejected and logged as trace_error."""
-    event = _make_event(trace_id=None)
-    result = engine.process(event)
-
-    assert isinstance(result, TraceError)
-    assert "None" in result.error
-    assert result.event_snapshot["trace_id"] is None
-
-
-# ---------------------------------------------------------------------------
-# 3. Empty / whitespace trace_id → rejection
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("bad_id", ["", "   ", "\t"])
-def test_empty_trace_id(engine, bad_id):
-    """Empty or whitespace-only trace_id must be rejected."""
-    event = _make_event(trace_id=bad_id)
-    result = engine.process(event)
-
-    assert isinstance(result, TraceError)
-    assert "empty" in result.error.lower() or "whitespace" in result.error.lower()
+    assert set(result.model_dump(mode="json")) == {
+        "trace_id",
+        "vessel_type",
+        "risk_level",
+        "state",
+        "anomaly_flag",
+        "timestamp",
+        "short_label",
+    }
 
 
-# ---------------------------------------------------------------------------
-# 4. Anomaly case — anomaly_flag passes through correctly
-# ---------------------------------------------------------------------------
-
-def test_anomaly_case(engine):
-    """anomaly_flag=True must appear in the output state_event unchanged."""
+def test_anomaly_override_forces_critical(engine):
+    """anomaly_flag=True must override the mapped state to CRITICAL."""
     event = _make_event(
+        risk_level="LOW",
         anomaly_flag=True,
-        risk_level="HIGH",
-        explanation="AIS transponder off in restricted zone",
+        trace_id="TRACE-ANOMALY",
     )
     result = engine.process(event)
 
-    assert isinstance(result, StateEvent)
+    assert result.trace_id == "TRACE-ANOMALY"
+    assert result.risk_level == RiskLevel.LOW
+    assert result.state == SystemState.CRITICAL
+    assert result.short_label == "Threat"
     assert result.anomaly_flag is True
-    assert result.state == RiskLevel.HIGH
-    assert result.explanation == "AIS transponder off in restricted zone"
 
 
-# ---------------------------------------------------------------------------
-# 5. Low confidence — passes through (no filtering / gating)
-# ---------------------------------------------------------------------------
-
-def test_low_confidence(engine):
-    """Low confidence must NOT be filtered — it passes through unchanged."""
-    event = _make_event(confidence=0.10, risk_level="LOW")
+def test_low_confidence_does_not_change_mapping(engine):
+    """Low confidence passes through the engine without extra decision logic."""
+    event = _make_event(
+        confidence=0.10,
+        vessel_type="unknown",
+        risk_level="LOW",
+        trace_id="TRACE-LOWCONF",
+    )
     result = engine.process(event)
 
-    assert isinstance(result, StateEvent)
-    assert result.confidence == 0.10
-    assert result.state == RiskLevel.LOW
+    assert result.trace_id == "TRACE-LOWCONF"
+    assert result.vessel_type == "unknown"
+    assert result.state == SystemState.NORMAL
 
 
-# ---------------------------------------------------------------------------
-# 6. Determinism guarantee (same input → identical output, ignoring timestamp)
-# ---------------------------------------------------------------------------
-
-def test_determinism(engine):
-    """Running the same event twice must produce structurally identical results."""
-    event = _make_event(risk_level="CRITICAL", confidence=0.95)
-
-    r1 = engine.process(event)
-    r2 = engine.process(event)
-
-    assert isinstance(r1, StateEvent)
-    assert isinstance(r2, StateEvent)
-    assert r1.trace_id == r2.trace_id
-    assert r1.state == r2.state
-    assert r1.risk_level == r2.risk_level
-    assert r1.confidence == r2.confidence
-    assert r1.anomaly_flag == r2.anomaly_flag
-    assert r1.explanation == r2.explanation
-    assert r1.vessel_type == r2.vessel_type
+def test_missing_trace_id_raises_explicit_error(engine):
+    """None trace_id must raise an explicit validation error."""
+    with pytest.raises(TraceValidationError, match="trace_id is None"):
+        engine.process(_make_event(trace_id=None))
 
 
-# ---------------------------------------------------------------------------
-# 7. Bucket logging — all event types logged
-# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("bad_id", ["", "   ", "\t"])
+def test_empty_trace_id_raises_explicit_error(engine, bad_id):
+    """Empty or whitespace-only trace_id must raise explicitly."""
+    with pytest.raises(TraceValidationError, match="empty/whitespace"):
+        engine.process(_make_event(trace_id=bad_id))
 
-def test_bucket_logging(engine, bucket_log_path):
-    """Bucket must contain incoming, outgoing, AND trace_error entries."""
-    # Good event → incoming + outgoing
-    good = _make_event(trace_id="TRACE-BUCKET-OK")
-    engine.process(good)
 
-    # Bad event → trace_error
-    bad = _make_event(trace_id=None)
-    engine.process(bad)
+def test_deterministic_state_fields(engine):
+    """Repeated processing should produce the same logical state fields."""
+    event = _make_event(
+        risk_level="HIGH",
+        trace_id="TRACE-DETERMINISTIC",
+        confidence=0.67,
+    )
 
-    # Read log lines
+    first = engine.process(event)
+    second = engine.process(event)
+
+    assert first.trace_id == second.trace_id
+    assert first.risk_level == second.risk_level
+    assert first.state == second.state
+    assert first.short_label == second.short_label
+    assert first.anomaly_flag == second.anomaly_flag
+    assert first.vessel_type == second.vessel_type
+
+
+def test_bucket_logging_captures_input_output_and_stage(engine, bucket_log_path):
+    """Bucket logs must capture incoming, outgoing, state_stage, and trace errors."""
+    engine.process(_make_event(trace_id="TRACE-BUCKET-OK"))
+
+    with pytest.raises(TraceValidationError):
+        engine.process(_make_event(trace_id=None))
+
     with open(bucket_log_path, encoding="utf-8") as fh:
-        lines = [json.loads(l) for l in fh if l.strip()]
+        lines = [json.loads(line) for line in fh if line.strip()]
 
     log_types = [entry["log_type"] for entry in lines]
 
     assert "incoming" in log_types
     assert "outgoing" in log_types
+    assert "state_stage" in log_types
     assert "trace_error" in log_types
 
-    # Every entry must have a timestamp
-    for entry in lines:
-        assert entry["timestamp"]
+    state_stage_entries = [entry for entry in lines if entry["log_type"] == "state_stage"]
+    assert state_stage_entries[0]["trace_id"] == "TRACE-BUCKET-OK"
+    assert state_stage_entries[0]["stage"] == "state_engine"
+    assert state_stage_entries[0]["state"] == "NORMAL"
 
 
-# ---------------------------------------------------------------------------
-# 8. Trace validator — unit tests (standalone)
-# ---------------------------------------------------------------------------
+def test_validate_trace_helper():
+    """The tuple-based validator remains available for standalone checks."""
+    ok, message = validate_trace(_make_event(trace_id="VALID-TRACE"))
+    assert ok is True
+    assert message == ""
 
-class TestTraceValidator:
-    def test_valid(self):
-        event = _make_event(trace_id="VALID-123")
-        ok, msg = validate_trace(event)
-        assert ok is True
-        assert msg == ""
+    ok, message = validate_trace(_make_event(trace_id=None))
+    assert ok is False
+    assert "None" in message
 
-    def test_none(self):
-        event = _make_event(trace_id=None)
-        ok, msg = validate_trace(event)
-        assert ok is False
-        assert "None" in msg
 
-    def test_empty(self):
-        event = _make_event(trace_id="")
-        ok, msg = validate_trace(event)
-        assert ok is False
+def test_trace_chain_proof_accepts_consistent_pipeline():
+    """Full pipeline trace proof should pass when every stage matches."""
+    trace_id = "TRACE-CHAIN-001"
+    result = ensure_trace_chain(
+        [
+            ("signal", {"trace_id": trace_id}),
+            ("perception", {"trace_id": trace_id}),
+            ("nicai", {"trace_id": trace_id}),
+            ("sanskar", {"trace_id": trace_id}),
+            ("state_engine", {"trace_id": trace_id}),
+        ]
+    )
 
-    def test_whitespace(self):
-        event = _make_event(trace_id="   ")
-        ok, msg = validate_trace(event)
-        assert ok is False
+    assert result == trace_id
+
+
+def test_trace_chain_proof_raises_on_mismatch():
+    """Trace mismatches must fail loudly instead of silently passing."""
+    with pytest.raises(TraceContinuityError, match="trace_id mismatch"):
+        ensure_trace_chain(
+            [
+                ("signal", {"trace_id": "TRACE-A"}),
+                ("perception", {"trace_id": "TRACE-B"}),
+            ]
+        )

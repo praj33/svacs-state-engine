@@ -1,0 +1,62 @@
+[
+  {
+    "scenario": "cargo",
+    "trace_id": "TRACE-CARGO-001",
+    "stages": {
+      "signal": "TRACE-CARGO-001",
+      "perception": "TRACE-CARGO-001",
+      "nicai": "TRACE-CARGO-001",
+      "sanskar": "TRACE-CARGO-001",
+      "state_engine": "TRACE-CARGO-001"
+    },
+    "status": "verified"
+  },
+  {
+    "scenario": "speedboat",
+    "trace_id": "TRACE-SPEEDBOAT-002",
+    "stages": {
+      "signal": "TRACE-SPEEDBOAT-002",
+      "perception": "TRACE-SPEEDBOAT-002",
+      "nicai": "TRACE-SPEEDBOAT-002",
+      "sanskar": "TRACE-SPEEDBOAT-002",
+      "state_engine": "TRACE-SPEEDBOAT-002"
+    },
+    "status": "verified"
+  },
+  {
+    "scenario": "submarine",
+    "trace_id": "TRACE-SUBMARINE-003",
+    "stages": {
+      "signal": "TRACE-SUBMARINE-003",
+      "perception": "TRACE-SUBMARINE-003",
+      "nicai": "TRACE-SUBMARINE-003",
+      "sanskar": "TRACE-SUBMARINE-003",
+      "state_engine": "TRACE-SUBMARINE-003"
+    },
+    "status": "verified"
+  },
+  {
+    "scenario": "low_confidence",
+    "trace_id": "TRACE-LOWCONF-004",
+    "stages": {
+      "signal": "TRACE-LOWCONF-004",
+      "perception": "TRACE-LOWCONF-004",
+      "nicai": "TRACE-LOWCONF-004",
+      "sanskar": "TRACE-LOWCONF-004",
+      "state_engine": "TRACE-LOWCONF-004"
+    },
+    "status": "verified"
+  },
+  {
+    "scenario": "anomaly",
+    "trace_id": "TRACE-ANOMALY-005",
+    "stages": {
+      "signal": "TRACE-ANOMALY-005",
+      "perception": "TRACE-ANOMALY-005",
+      "nicai": "TRACE-ANOMALY-005",
+      "sanskar": "TRACE-ANOMALY-005",
+      "state_engine": "TRACE-ANOMALY-005"
+    },
+    "status": "verified"
+  }
+]

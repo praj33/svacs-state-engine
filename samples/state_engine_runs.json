@@ -1,0 +1,217 @@
+[
+  {
+    "scenario": "cargo",
+    "pipeline": {
+      "signal_event": {
+        "trace_id": "TRACE-CARGO-001",
+        "sensor": "hydrophone-07",
+        "contact_strength": 0.84
+      },
+      "perception_event": {
+        "trace_id": "TRACE-CARGO-001",
+        "vessel_type": "cargo",
+        "confidence": 0.94
+      },
+      "nicai_event": {
+        "trace_id": "TRACE-CARGO-001",
+        "risk_level": "LOW",
+        "anomaly_flag": false
+      },
+      "intelligence_event": {
+        "trace_id": "TRACE-CARGO-001",
+        "vessel_type": "cargo",
+        "confidence": 0.94,
+        "risk_level": "LOW",
+        "anomaly_flag": false,
+        "explanation": "Routine cargo route with no hostile indicators."
+      },
+      "state_event": {
+        "trace_id": "TRACE-CARGO-001",
+        "vessel_type": "cargo",
+        "risk_level": "LOW",
+        "state": "NORMAL",
+        "anomaly_flag": false,
+        "timestamp": "2026-04-29T07:24:36.730250+00:00",
+        "short_label": "Safe"
+      }
+    },
+    "state_stage_log": {
+      "trace_id": "TRACE-CARGO-001",
+      "stage": "state_engine",
+      "state": "NORMAL",
+      "timestamp": "2026-04-29T07:24:36.730250+00:00"
+    }
+  },
+  {
+    "scenario": "speedboat",
+    "pipeline": {
+      "signal_event": {
+        "trace_id": "TRACE-SPEEDBOAT-002",
+        "sensor": "coastal-radar-02",
+        "contact_strength": 0.78
+      },
+      "perception_event": {
+        "trace_id": "TRACE-SPEEDBOAT-002",
+        "vessel_type": "speedboat",
+        "confidence": 0.88
+      },
+      "nicai_event": {
+        "trace_id": "TRACE-SPEEDBOAT-002",
+        "risk_level": "MEDIUM",
+        "anomaly_flag": false
+      },
+      "intelligence_event": {
+        "trace_id": "TRACE-SPEEDBOAT-002",
+        "vessel_type": "speedboat",
+        "confidence": 0.88,
+        "risk_level": "MEDIUM",
+        "anomaly_flag": false,
+        "explanation": "Fast coastal movement near a monitored corridor."
+      },
+      "state_event": {
+        "trace_id": "TRACE-SPEEDBOAT-002",
+        "vessel_type": "speedboat",
+        "risk_level": "MEDIUM",
+        "state": "WARNING",
+        "anomaly_flag": false,
+        "timestamp": "2026-04-29T07:24:36.731260+00:00",
+        "short_label": "Watch"
+      }
+    },
+    "state_stage_log": {
+      "trace_id": "TRACE-SPEEDBOAT-002",
+      "stage": "state_engine",
+      "state": "WARNING",
+      "timestamp": "2026-04-29T07:24:36.731260+00:00"
+    }
+  },
+  {
+    "scenario": "submarine",
+    "pipeline": {
+      "signal_event": {
+        "trace_id": "TRACE-SUBMARINE-003",
+        "sensor": "sonar-array-11",
+        "contact_strength": 0.97
+      },
+      "perception_event": {
+        "trace_id": "TRACE-SUBMARINE-003",
+        "vessel_type": "submarine",
+        "confidence": 0.99
+      },
+      "nicai_event": {
+        "trace_id": "TRACE-SUBMARINE-003",
+        "risk_level": "HIGH",
+        "anomaly_flag": false
+      },
+      "intelligence_event": {
+        "trace_id": "TRACE-SUBMARINE-003",
+        "vessel_type": "submarine",
+        "confidence": 0.99,
+        "risk_level": "HIGH",
+        "anomaly_flag": false,
+        "explanation": "Submerged contact signature matches high-risk profile."
+      },
+      "state_event": {
+        "trace_id": "TRACE-SUBMARINE-003",
+        "vessel_type": "submarine",
+        "risk_level": "HIGH",
+        "state": "ALERT",
+        "anomaly_flag": false,
+        "timestamp": "2026-04-29T07:24:36.732285+00:00",
+        "short_label": "Concern"
+      }
+    },
+    "state_stage_log": {
+      "trace_id": "TRACE-SUBMARINE-003",
+      "stage": "state_engine",
+      "state": "ALERT",
+      "timestamp": "2026-04-29T07:24:36.732285+00:00"
+    }
+  },
+  {
+    "scenario": "low_confidence",
+    "pipeline": {
+      "signal_event": {
+        "trace_id": "TRACE-LOWCONF-004",
+        "sensor": "hydrophone-13",
+        "contact_strength": 0.21
+      },
+      "perception_event": {
+        "trace_id": "TRACE-LOWCONF-004",
+        "vessel_type": "unknown",
+        "confidence": 0.19
+      },
+      "nicai_event": {
+        "trace_id": "TRACE-LOWCONF-004",
+        "risk_level": "LOW",
+        "anomaly_flag": false
+      },
+      "intelligence_event": {
+        "trace_id": "TRACE-LOWCONF-004",
+        "vessel_type": "unknown",
+        "confidence": 0.19,
+        "risk_level": "LOW",
+        "anomaly_flag": false,
+        "explanation": "Weak contact retained for monitoring despite low confidence."
+      },
+      "state_event": {
+        "trace_id": "TRACE-LOWCONF-004",
+        "vessel_type": "unknown",
+        "risk_level": "LOW",
+        "state": "NORMAL",
+        "anomaly_flag": false,
+        "timestamp": "2026-04-29T07:24:36.732285+00:00",
+        "short_label": "Safe"
+      }
+    },
+    "state_stage_log": {
+      "trace_id": "TRACE-LOWCONF-004",
+      "stage": "state_engine",
+      "state": "NORMAL",
+      "timestamp": "2026-04-29T07:24:36.732285+00:00"
+    }
+  },
+  {
+    "scenario": "anomaly",
+    "pipeline": {
+      "signal_event": {
+        "trace_id": "TRACE-ANOMALY-005",
+        "sensor": "ais-fusion-03",
+        "contact_strength": 0.91
+      },
+      "perception_event": {
+        "trace_id": "TRACE-ANOMALY-005",
+        "vessel_type": "speedboat",
+        "confidence": 0.83
+      },
+      "nicai_event": {
+        "trace_id": "TRACE-ANOMALY-005",
+        "risk_level": "MEDIUM",
+        "anomaly_flag": true
+      },
+      "intelligence_event": {
+        "trace_id": "TRACE-ANOMALY-005",
+        "vessel_type": "speedboat",
+        "confidence": 0.83,
+        "risk_level": "MEDIUM",
+        "anomaly_flag": true,
+        "explanation": "Unexpected maneuver plus transponder gap detected."
+      },
+      "state_event": {
+        "trace_id": "TRACE-ANOMALY-005",
+        "vessel_type": "speedboat",
+        "risk_level": "MEDIUM",
+        "state": "CRITICAL",
+        "anomaly_flag": true,
+        "timestamp": "2026-04-29T07:24:36.733789+00:00",
+        "short_label": "Threat"
+      }
+    },
+    "state_stage_log": {
+      "trace_id": "TRACE-ANOMALY-005",
+      "stage": "state_engine",
+      "state": "CRITICAL",
+      "timestamp": "2026-04-29T07:24:36.733789+00:00"
+    }
+  }
+]

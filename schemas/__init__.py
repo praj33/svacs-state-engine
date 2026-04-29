@@ -1,15 +1,15 @@
 from .state_event import (
     RiskLevel,
+    SystemState,
     IntelligenceEvent,
     StateEvent,
-    TraceError,
     BucketLogEntry,
 )
 
 __all__ = [
     "RiskLevel",
+    "SystemState",
     "IntelligenceEvent",
     "StateEvent",
-    "TraceError",
     "BucketLogEntry",
 ]

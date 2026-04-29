@@ -1,23 +1,30 @@
 """
-State Engine — Main Entry Point
-================================
-CLI runner that demonstrates the full pipeline with sample events.
+State Engine - Main Entry Point
+===============================
+CLI runner that demonstrates deterministic intelligence_event -> state_event
+transformation and exports integration artifacts for review.
 
 Usage:
-    python main.py              # run demo with sample events
-    python main.py event.json   # process a single event from file
+    python main.py              # run the 5-scenario pipeline demo
+    python main.py event.json   # process a single intelligence_event file
 """
 
 from __future__ import annotations
 
 import json
-import sys
 import logging
+import sys
+from pathlib import Path
+from typing import Any
 
-from schemas.state_event import IntelligenceEvent, StateEvent, TraceError
+from schemas.state_event import IntelligenceEvent, StateEvent
 from state_engine import StateEngine
+from trace_validator import (
+    TraceContinuityError,
+    TraceValidationError,
+    ensure_trace_chain,
+)
 
-# Configure logging so InsightFlow emitter output is visible
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(name)s | %(message)s",
@@ -25,105 +32,260 @@ logging.basicConfig(
 )
 
 
-# ---------------------------------------------------------------------------
-# Sample intelligence events for demo
-# ---------------------------------------------------------------------------
-SAMPLE_EVENTS = [
-    # 1. Normal LOW risk
+PIPELINE_SCENARIOS = [
     {
-        "trace_id": "TRACE-001-ACOU-SAM-NIC-SAN",
-        "vessel_type": "cargo",
-        "confidence": 0.92,
-        "risk_level": "LOW",
-        "anomaly_flag": False,
-        "explanation": "Routine cargo vessel on standard shipping lane.",
+        "name": "cargo",
+        "signal_event": {
+            "trace_id": "TRACE-CARGO-001",
+            "sensor": "hydrophone-07",
+            "contact_strength": 0.84,
+        },
+        "perception_event": {
+            "trace_id": "TRACE-CARGO-001",
+            "vessel_type": "cargo",
+            "confidence": 0.94,
+        },
+        "nicai_event": {
+            "trace_id": "TRACE-CARGO-001",
+            "risk_level": "LOW",
+            "anomaly_flag": False,
+        },
+        "intelligence_event": {
+            "trace_id": "TRACE-CARGO-001",
+            "vessel_type": "cargo",
+            "confidence": 0.94,
+            "risk_level": "LOW",
+            "anomaly_flag": False,
+            "explanation": "Routine cargo route with no hostile indicators.",
+        },
     },
-    # 2. HIGH risk with anomaly
     {
-        "trace_id": "TRACE-002-ACOU-SAM-NIC-SAN",
-        "vessel_type": "tanker",
-        "confidence": 0.87,
-        "risk_level": "HIGH",
-        "anomaly_flag": True,
-        "explanation": "AIS transponder switched off in restricted zone.",
+        "name": "speedboat",
+        "signal_event": {
+            "trace_id": "TRACE-SPEEDBOAT-002",
+            "sensor": "coastal-radar-02",
+            "contact_strength": 0.78,
+        },
+        "perception_event": {
+            "trace_id": "TRACE-SPEEDBOAT-002",
+            "vessel_type": "speedboat",
+            "confidence": 0.88,
+        },
+        "nicai_event": {
+            "trace_id": "TRACE-SPEEDBOAT-002",
+            "risk_level": "MEDIUM",
+            "anomaly_flag": False,
+        },
+        "intelligence_event": {
+            "trace_id": "TRACE-SPEEDBOAT-002",
+            "vessel_type": "speedboat",
+            "confidence": 0.88,
+            "risk_level": "MEDIUM",
+            "anomaly_flag": False,
+            "explanation": "Fast coastal movement near a monitored corridor.",
+        },
     },
-    # 3. Missing trace_id -- should be REJECTED
     {
-        "trace_id": None,
-        "vessel_type": "fishing",
-        "confidence": 0.55,
-        "risk_level": "MEDIUM",
-        "anomaly_flag": False,
-        "explanation": "Unidentified fishing vessel near EEZ boundary.",
+        "name": "submarine",
+        "signal_event": {
+            "trace_id": "TRACE-SUBMARINE-003",
+            "sensor": "sonar-array-11",
+            "contact_strength": 0.97,
+        },
+        "perception_event": {
+            "trace_id": "TRACE-SUBMARINE-003",
+            "vessel_type": "submarine",
+            "confidence": 0.99,
+        },
+        "nicai_event": {
+            "trace_id": "TRACE-SUBMARINE-003",
+            "risk_level": "HIGH",
+            "anomaly_flag": False,
+        },
+        "intelligence_event": {
+            "trace_id": "TRACE-SUBMARINE-003",
+            "vessel_type": "submarine",
+            "confidence": 0.99,
+            "risk_level": "HIGH",
+            "anomaly_flag": False,
+            "explanation": "Submerged contact signature matches high-risk profile.",
+        },
     },
-    # 4. CRITICAL risk
     {
-        "trace_id": "TRACE-004-ACOU-SAM-NIC-SAN",
-        "vessel_type": "submarine",
-        "confidence": 0.99,
-        "risk_level": "CRITICAL",
-        "anomaly_flag": True,
-        "explanation": "Submerged contact detected -- acoustic signature unknown.",
+        "name": "low_confidence",
+        "signal_event": {
+            "trace_id": "TRACE-LOWCONF-004",
+            "sensor": "hydrophone-13",
+            "contact_strength": 0.21,
+        },
+        "perception_event": {
+            "trace_id": "TRACE-LOWCONF-004",
+            "vessel_type": "unknown",
+            "confidence": 0.19,
+        },
+        "nicai_event": {
+            "trace_id": "TRACE-LOWCONF-004",
+            "risk_level": "LOW",
+            "anomaly_flag": False,
+        },
+        "intelligence_event": {
+            "trace_id": "TRACE-LOWCONF-004",
+            "vessel_type": "unknown",
+            "confidence": 0.19,
+            "risk_level": "LOW",
+            "anomaly_flag": False,
+            "explanation": "Weak contact retained for monitoring despite low confidence.",
+        },
     },
-    # 5. Low confidence event
     {
-        "trace_id": "TRACE-005-ACOU-SAM-NIC-SAN",
-        "vessel_type": "unknown",
-        "confidence": 0.15,
-        "risk_level": "LOW",
-        "anomaly_flag": False,
-        "explanation": "Weak acoustic return -- likely noise or biologics.",
+        "name": "anomaly",
+        "signal_event": {
+            "trace_id": "TRACE-ANOMALY-005",
+            "sensor": "ais-fusion-03",
+            "contact_strength": 0.91,
+        },
+        "perception_event": {
+            "trace_id": "TRACE-ANOMALY-005",
+            "vessel_type": "speedboat",
+            "confidence": 0.83,
+        },
+        "nicai_event": {
+            "trace_id": "TRACE-ANOMALY-005",
+            "risk_level": "MEDIUM",
+            "anomaly_flag": True,
+        },
+        "intelligence_event": {
+            "trace_id": "TRACE-ANOMALY-005",
+            "vessel_type": "speedboat",
+            "confidence": 0.83,
+            "risk_level": "MEDIUM",
+            "anomaly_flag": True,
+            "explanation": "Unexpected maneuver plus transponder gap detected.",
+        },
     },
 ]
 
 
+def _write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _as_dict(model: Any) -> dict[str, Any]:
+    dump = getattr(model, "model_dump", None)
+    if callable(dump):
+        return dump(mode="json")
+    return model.dict()
+
+
+def _as_json(model: Any) -> str:
+    dump_json = getattr(model, "model_dump_json", None)
+    if callable(dump_json):
+        return dump_json(indent=2)
+    return model.json(indent=2)
+
+
+def _build_trace_chain(
+    scenario: dict[str, Any],
+    state_event: StateEvent,
+) -> list[tuple[str, dict[str, Any]]]:
+    return [
+        ("signal", scenario["signal_event"]),
+        ("perception", scenario["perception_event"]),
+        ("nicai", scenario["nicai_event"]),
+        ("sanskar", scenario["intelligence_event"]),
+        ("state_engine", _as_dict(state_event)),
+    ]
+
+
 def run_demo() -> None:
-    """Process sample events and display results."""
-    engine = StateEngine()
+    """Process the required five scenarios and export review artifacts."""
+    bucket_log_path = Path("samples/bucket_logs.jsonl")
+    bucket_log_path.parent.mkdir(parents=True, exist_ok=True)
+    bucket_log_path.write_text("", encoding="utf-8")
+
+    engine = StateEngine(bucket_log_path=str(bucket_log_path))
+    scenario_outputs: list[dict[str, Any]] = []
+    trace_proofs: list[dict[str, Any]] = []
+
     print("=" * 72)
-    print("  STATE ENGINE -- Demo Run")
-    print("  Pipeline: Acoustic -> Samachar -> NICAI -> Sanskar -> STATE -> Bucket")
+    print("  STATE ENGINE - Deterministic Demo")
+    print("  Pipeline: signal -> perception -> NICAI -> Sanskar -> state_engine")
     print("=" * 72)
 
-    for i, raw in enumerate(SAMPLE_EVENTS, 1):
-        print(f"\n{'-' * 72}")
-        print(f"  Event #{i}")
-        print(f"{'-' * 72}")
+    for index, scenario in enumerate(PIPELINE_SCENARIOS, start=1):
+        intelligence_event = IntelligenceEvent(**scenario["intelligence_event"])
+        state_event = engine.process(intelligence_event)
+        trace_chain = _build_trace_chain(scenario, state_event)
+        trace_id = ensure_trace_chain(trace_chain)
+        stage_log = {
+            "trace_id": trace_id,
+            "stage": "state_engine",
+            "state": state_event.state.value,
+            "timestamp": state_event.timestamp,
+        }
 
-        event = IntelligenceEvent(**raw)
-        result = engine.process(event)
+        scenario_outputs.append(
+            {
+                "scenario": scenario["name"],
+                "pipeline": {
+                    "signal_event": scenario["signal_event"],
+                    "perception_event": scenario["perception_event"],
+                    "nicai_event": scenario["nicai_event"],
+                    "intelligence_event": scenario["intelligence_event"],
+                    "state_event": _as_dict(state_event),
+                },
+                "state_stage_log": stage_log,
+            }
+        )
+        trace_proofs.append(
+            {
+                "scenario": scenario["name"],
+                "trace_id": trace_id,
+                "stages": {
+                    stage_name: payload["trace_id"]
+                    for stage_name, payload in trace_chain
+                },
+                "status": "verified",
+            }
+        )
 
-        if isinstance(result, StateEvent):
-            print(f"  [OK] STATE ASSIGNED")
-            print(f"     trace_id   : {result.trace_id}")
-            print(f"     vessel     : {result.vessel_type}")
-            print(f"     risk_level : {result.risk_level.value}")
-            print(f"     state      : {result.state.value}")
-            print(f"     confidence : {result.confidence}")
-            print(f"     anomaly    : {result.anomaly_flag}")
-            print(f"     timestamp  : {result.timestamp}")
-        elif isinstance(result, TraceError):
-            print(f"  [REJECTED] TRACE ERROR -- event rejected")
-            print(f"     reason     : {result.error}")
+        print(f"\n{index}. {scenario['name']}")
+        print(f"   trace_id   : {trace_id}")
+        print(f"   vessel     : {state_event.vessel_type}")
+        print(f"   risk_level : {state_event.risk_level.value}")
+        print(f"   state      : {state_event.state.value}")
+        print(f"   label      : {state_event.short_label}")
+        print(f"   anomaly    : {state_event.anomaly_flag}")
+
+    _write_json(Path("samples/state_engine_runs.json"), scenario_outputs)
+    _write_json(Path("samples/trace_continuity_proof.json"), trace_proofs)
 
     print(f"\n{'=' * 72}")
-    print("  Bucket log written to: logs/bucket.jsonl")
-    print(f"{'=' * 72}\n")
+    print("  Sample outputs written to: samples/state_engine_runs.json")
+    print("  Trace proof written to   : samples/trace_continuity_proof.json")
+    print("  Bucket logs written to   : samples/bucket_logs.jsonl")
+    print(f"{'=' * 72}")
 
 
 def run_single(path: str) -> None:
-    """Process a single event from a JSON file."""
-    with open(path, encoding="utf-8") as fh:
-        raw = json.load(fh)
-
+    """Process a single intelligence_event from a JSON file."""
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
     engine = StateEngine()
-    event = IntelligenceEvent(**raw)
-    result = engine.process(event)
 
-    if isinstance(result, StateEvent):
-        print(result.json(indent=2))
-    else:
-        print(json.dumps(result.dict(), indent=2))
+    try:
+        result = engine.process(IntelligenceEvent(**raw))
+        print(_as_json(result))
+    except (TraceValidationError, TraceContinuityError) as exc:
+        print(
+            json.dumps(
+                {
+                    "error": str(exc),
+                    "event_snapshot": raw,
+                },
+                indent=2,
+            )
+        )
 
 
 if __name__ == "__main__":

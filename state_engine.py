@@ -1,29 +1,55 @@
 """
 State Engine
 ============
-Core deterministic evaluation layer.
+Core deterministic state mapping layer.
 
 Responsibility:
-  1. Validate trace_id  (reject if missing)
-  2. Assign state        (risk_level → state, 1:1)
-  3. Log to Bucket       (incoming, outgoing, errors)
-  4. Emit to InsightFlow (passive)
+  1. Validate trace_id
+  2. Convert intelligence risk into system state
+  3. Preserve trace continuity into state_event
+  4. Log audit records for UI and Mitra
 
 Determinism guarantee:
-  Same intelligence_event → identical state_event every time.
-  No randomness. No dynamic thresholds. No enforcement logic.
+  The same intelligence_event always maps to the same state.
+  No randomness. No extra thresholds. No new decision system.
 """
 
 from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
-from typing import Union
 
-from schemas.state_event import IntelligenceEvent, StateEvent, TraceError
-from trace_validator import validate_trace
 from bucket_logger import BucketLogger
 from emitter import emit_to_insightflow
+from schemas.state_event import IntelligenceEvent, RiskLevel, StateEvent, SystemState
+from trace_validator import (
+    TraceContinuityError,
+    TraceValidationError,
+    ensure_trace_match,
+    ensure_valid_trace_id,
+)
+
+
+RISK_STATE_MAP = {
+    RiskLevel.LOW: SystemState.NORMAL,
+    RiskLevel.MEDIUM: SystemState.WARNING,
+    RiskLevel.HIGH: SystemState.ALERT,
+    RiskLevel.CRITICAL: SystemState.CRITICAL,
+}
+
+SHORT_LABEL_MAP = {
+    SystemState.NORMAL: "Safe",
+    SystemState.WARNING: "Watch",
+    SystemState.ALERT: "Concern",
+    SystemState.CRITICAL: "Threat",
+}
+
+
+def _model_to_dict(model: object) -> dict:
+    dump = getattr(model, "model_dump", None)
+    if callable(dump):
+        return dump(mode="json")
+    return model.dict()
 
 
 class StateEngine:
@@ -32,65 +58,80 @@ class StateEngine:
     def __init__(self, bucket_log_path: str = "logs/bucket.jsonl") -> None:
         self.bucket = BucketLogger(log_path=bucket_log_path)
 
-    def process(
-        self, event: IntelligenceEvent
-    ) -> Union[StateEvent, TraceError]:
-        """
-        Process a single intelligence_event.
+    @staticmethod
+    def map_state(risk_level: RiskLevel, anomaly_flag: bool) -> SystemState:
+        """Map upstream risk to a UI-safe system state with anomaly override."""
+        if anomaly_flag:
+            return SystemState.CRITICAL
 
-        Returns:
-            StateEvent  — on success
-            TraceError  — if trace_id is missing / invalid
-        """
+        return RISK_STATE_MAP[risk_level]
+
+    def process(self, event: IntelligenceEvent) -> StateEvent:
+        """Process a single intelligence_event into a stable state_event."""
         start = time.monotonic()
-        event_dict = event.dict()
+        event_dict = _model_to_dict(event)
 
-        # ── 1. Trace enforcement ──────────────────────────────────
-        valid, error_msg = validate_trace(event)
-
-        if not valid:
-            # Log the failure to Bucket
+        try:
+            trace_id = ensure_valid_trace_id(
+                event.trace_id,
+                stage="state_engine.input",
+            )
+        except TraceValidationError as exc:
             self.bucket.log_trace_error(
                 trace_id=event.trace_id,
                 event_dict=event_dict,
-                error_msg=error_msg,
+                error_msg=str(exc),
             )
-            return TraceError(
-                error=error_msg,
-                event_snapshot=event_dict,
-                timestamp=datetime.now(timezone.utc).isoformat(),
-            )
+            raise
 
-        # ── 2. Log incoming event ─────────────────────────────────
         self.bucket.log_incoming(
-            trace_id=event.trace_id,
+            trace_id=trace_id,
             event_dict=event_dict,
         )
 
-        # ── 3. State assignment (deterministic) ───────────────────
-        #    risk_level → state  (direct 1:1 mapping, no extra logic)
-        now = datetime.now(timezone.utc).isoformat()
-
-        state_event = StateEvent(
-            trace_id=event.trace_id,  # type: ignore[arg-type]
-            vessel_type=event.vessel_type,
-            confidence=event.confidence,
+        state = self.map_state(
             risk_level=event.risk_level,
-            state=event.risk_level,      # ← deterministic mirror
             anomaly_flag=event.anomaly_flag,
-            explanation=event.explanation,
-            timestamp=now,
+        )
+        state_event = StateEvent(
+            trace_id=trace_id,
+            vessel_type=event.vessel_type,
+            risk_level=event.risk_level,
+            state=state,
+            anomaly_flag=event.anomaly_flag,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            short_label=SHORT_LABEL_MAP[state],
         )
 
-        # ── 4. Log outgoing event ─────────────────────────────────
-        state_dict = state_event.dict()
+        try:
+            ensure_trace_match(
+                expected_trace_id=trace_id,
+                actual_trace_id=state_event.trace_id,
+                source_stage="intelligence_event",
+                target_stage="state_event",
+            )
+        except TraceContinuityError as exc:
+            self.bucket.log_trace_error(
+                trace_id=trace_id,
+                event_dict={
+                    "input": event_dict,
+                    "output": _model_to_dict(state_event),
+                },
+                error_msg=str(exc),
+            )
+            raise
+
+        state_dict = _model_to_dict(state_event)
         self.bucket.log_outgoing(
             trace_id=state_event.trace_id,
             input_dict=event_dict,
             output_dict=state_dict,
         )
+        self.bucket.log_state_stage(
+            trace_id=state_event.trace_id,
+            state=state_event.state.value,
+        )
 
-        # ── 5. Passive emission to InsightFlow / Pravah ───────────
         latency_ms = (time.monotonic() - start) * 1000
         emit_to_insightflow(state_event, latency_ms)
 
