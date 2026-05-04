@@ -81,6 +81,36 @@ python main.py
 pytest tests/ -v
 ```
 
+## Live HTTP Intake
+
+Run the State Engine receiver:
+
+```bash
+uvicorn api_server:app --host 0.0.0.0 --port 9000
+```
+
+Upstream NICAI/Sanskar can push live intelligence output here:
+
+```text
+POST http://localhost:9000/ingest/intelligence
+```
+
+Expected request body:
+
+```json
+{
+  "trace_id": "9d6dc7d6-d915-4738-a3bf-f20c78f6780b",
+  "vessel_type": "cargo",
+  "confidence": 0.6396,
+  "risk_level": "MEDIUM",
+  "anomaly_flag": false,
+  "explanation": "Moderate confidence acoustic detection - medium risk",
+  "validation_status": "ALLOW"
+}
+```
+
+The response is the deterministic `state_event`. Extra upstream fields such as `validation_status` are preserved in audit logs, but are not forwarded to UI/Mitra state output.
+
 Running `python main.py` exports:
 
 - `samples/state_engine_runs.json`

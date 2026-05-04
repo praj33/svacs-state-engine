@@ -8,7 +8,12 @@ and bucket log entry for the State Engine.
 from enum import Enum
 from typing import Any, Dict, Optional
 
+import pydantic
 from pydantic import BaseModel, Field
+
+PYDANTIC_V2 = int(pydantic.VERSION.split(".", 1)[0]) >= 2
+if PYDANTIC_V2:
+    from pydantic import ConfigDict
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +52,12 @@ class IntelligenceEvent(BaseModel):
     risk_level: RiskLevel
     anomaly_flag: bool = False
     explanation: str = ""
+
+    if PYDANTIC_V2:
+        model_config = ConfigDict(extra="allow")
+    else:
+        class Config:
+            extra = "allow"
 
 
 # ---------------------------------------------------------------------------

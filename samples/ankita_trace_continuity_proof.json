@@ -1,0 +1,96 @@
+﻿{
+    "captured_at":  "2026-05-04T11:10:05Z",
+    "source_trace_proof":  "C:/Users/Microsoft/Downloads/trace_proof.txt",
+    "source_state_engine_log_artifact":  "samples/live_http_state_engine_results.json",
+    "total_cases":  5,
+    "all_continuity_verified":  true,
+    "all_state_outputs_match_live_log":  true,
+    "verified_stages":  [
+                            "perception",
+                            "validation",
+                            "intelligence",
+                            "state_engine"
+                        ],
+    "results":  [
+                    {
+                        "trace_id":  "cargo-1",
+                        "vessel_type":  "cargo",
+                        "risk_level":  "MEDIUM",
+                        "state":  "WARNING",
+                        "short_label":  "Watch",
+                        "validation_status":  "ALLOW",
+                        "stage_trace_ids":  {
+                                                "perception":  "cargo-1",
+                                                "intelligence":  "cargo-1",
+                                                "state_event_reported_by_partner":  "cargo-1",
+                                                "state_engine_log":  "cargo-1"
+                                            },
+                        "continuity_verified":  true,
+                        "state_matches_live_log":  true
+                    },
+                    {
+                        "trace_id":  "speedboat-1",
+                        "vessel_type":  "speedboat",
+                        "risk_level":  "HIGH",
+                        "state":  "ALERT",
+                        "short_label":  "Concern",
+                        "validation_status":  "ALLOW",
+                        "stage_trace_ids":  {
+                                                "perception":  "speedboat-1",
+                                                "intelligence":  "speedboat-1",
+                                                "state_event_reported_by_partner":  "speedboat-1",
+                                                "state_engine_log":  "speedboat-1"
+                                            },
+                        "continuity_verified":  true,
+                        "state_matches_live_log":  true
+                    },
+                    {
+                        "trace_id":  "submarine-1",
+                        "vessel_type":  "submarine",
+                        "risk_level":  "CRITICAL",
+                        "state":  "CRITICAL",
+                        "short_label":  "Threat",
+                        "validation_status":  "ALLOW",
+                        "stage_trace_ids":  {
+                                                "perception":  "submarine-1",
+                                                "intelligence":  "submarine-1",
+                                                "state_event_reported_by_partner":  "submarine-1",
+                                                "state_engine_log":  "submarine-1"
+                                            },
+                        "continuity_verified":  true,
+                        "state_matches_live_log":  true
+                    },
+                    {
+                        "trace_id":  "low-1",
+                        "vessel_type":  "unknown",
+                        "risk_level":  "HIGH",
+                        "state":  "ALERT",
+                        "short_label":  "Concern",
+                        "validation_status":  "ALLOW",
+                        "stage_trace_ids":  {
+                                                "perception":  "low-1",
+                                                "intelligence":  "low-1",
+                                                "state_event_reported_by_partner":  "low-1",
+                                                "state_engine_log":  "low-1"
+                                            },
+                        "continuity_verified":  true,
+                        "state_matches_live_log":  true
+                    },
+                    {
+                        "trace_id":  "anomaly-1",
+                        "vessel_type":  "unknown",
+                        "risk_level":  "CRITICAL",
+                        "state":  "CRITICAL",
+                        "short_label":  "Threat",
+                        "validation_status":  "ALLOW",
+                        "stage_trace_ids":  {
+                                                "perception":  "anomaly-1",
+                                                "intelligence":  "anomaly-1",
+                                                "state_event_reported_by_partner":  "anomaly-1",
+                                                "state_engine_log":  "anomaly-1"
+                                            },
+                        "continuity_verified":  true,
+                        "state_matches_live_log":  true
+                    }
+                ]
+}

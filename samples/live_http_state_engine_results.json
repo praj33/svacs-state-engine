@@ -1,0 +1,150 @@
+﻿{
+    "captured_at":  "2026-05-04T10:27:47Z",
+    "source":  "logs/live_bucket.jsonl",
+    "integration_partner":  "Ankita Prajapati - NICAI + Sanskar",
+    "transport":  "HTTP POST via ngrok",
+    "total_cases":  5,
+    "all_status_code_200_reported_by_partner":  true,
+    "results":  [
+                    {
+                        "trace_id":  "cargo-1",
+                        "intelligence_event":  {
+                                                   "trace_id":  "cargo-1",
+                                                   "vessel_type":  "cargo",
+                                                   "confidence":  0.6396,
+                                                   "risk_level":  "MEDIUM",
+                                                   "anomaly_flag":  false,
+                                                   "explanation":  "Moderate confidence acoustic detection — medium risk",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "cargo-1",
+                                            "vessel_type":  "cargo",
+                                            "risk_level":  "MEDIUM",
+                                            "state":  "WARNING",
+                                            "anomaly_flag":  false,
+                                            "timestamp":  "2026-05-04T10:16:58.543984+00:00",
+                                            "short_label":  "Watch"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "cargo-1",
+                                                "stage":  "state_engine",
+                                                "state":  "WARNING",
+                                                "timestamp":  "2026-05-04T10:16:58.543984+00:00"
+                                            },
+                        "status":  "received_by_state_engine"
+                    },
+                    {
+                        "trace_id":  "speedboat-1",
+                        "intelligence_event":  {
+                                                   "trace_id":  "speedboat-1",
+                                                   "vessel_type":  "speedboat",
+                                                   "confidence":  0.3922,
+                                                   "risk_level":  "HIGH",
+                                                   "anomaly_flag":  false,
+                                                   "explanation":  "Low confidence acoustic detection — high risk",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "speedboat-1",
+                                            "vessel_type":  "speedboat",
+                                            "risk_level":  "HIGH",
+                                            "state":  "ALERT",
+                                            "anomaly_flag":  false,
+                                            "timestamp":  "2026-05-04T10:17:00.393729+00:00",
+                                            "short_label":  "Concern"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "speedboat-1",
+                                                "stage":  "state_engine",
+                                                "state":  "ALERT",
+                                                "timestamp":  "2026-05-04T10:17:00.393729+00:00"
+                                            },
+                        "status":  "received_by_state_engine"
+                    },
+                    {
+                        "trace_id":  "submarine-1",
+                        "intelligence_event":  {
+                                                   "trace_id":  "submarine-1",
+                                                   "vessel_type":  "submarine",
+                                                   "confidence":  0.1734,
+                                                   "risk_level":  "CRITICAL",
+                                                   "anomaly_flag":  true,
+                                                   "explanation":  "Anomalous acoustic pattern detected",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "submarine-1",
+                                            "vessel_type":  "submarine",
+                                            "risk_level":  "CRITICAL",
+                                            "state":  "CRITICAL",
+                                            "anomaly_flag":  true,
+                                            "timestamp":  "2026-05-04T10:17:02.681181+00:00",
+                                            "short_label":  "Threat"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "submarine-1",
+                                                "stage":  "state_engine",
+                                                "state":  "CRITICAL",
+                                                "timestamp":  "2026-05-04T10:17:02.681181+00:00"
+                                            },
+                        "status":  "received_by_state_engine"
+                    },
+                    {
+                        "trace_id":  "low-1",
+                        "intelligence_event":  {
+                                                   "trace_id":  "low-1",
+                                                   "vessel_type":  "unknown",
+                                                   "confidence":  0.2,
+                                                   "risk_level":  "HIGH",
+                                                   "anomaly_flag":  false,
+                                                   "explanation":  "Low confidence detection",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "low-1",
+                                            "vessel_type":  "unknown",
+                                            "risk_level":  "HIGH",
+                                            "state":  "ALERT",
+                                            "anomaly_flag":  false,
+                                            "timestamp":  "2026-05-04T10:17:04.654938+00:00",
+                                            "short_label":  "Concern"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "low-1",
+                                                "stage":  "state_engine",
+                                                "state":  "ALERT",
+                                                "timestamp":  "2026-05-04T10:17:04.655444+00:00"
+                                            },
+                        "status":  "received_by_state_engine"
+                    },
+                    {
+                        "trace_id":  "anomaly-1",
+                        "intelligence_event":  {
+                                                   "trace_id":  "anomaly-1",
+                                                   "vessel_type":  "unknown",
+                                                   "confidence":  0.02,
+                                                   "risk_level":  "CRITICAL",
+                                                   "anomaly_flag":  true,
+                                                   "explanation":  "Anomalous acoustic pattern detected",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "anomaly-1",
+                                            "vessel_type":  "unknown",
+                                            "risk_level":  "CRITICAL",
+                                            "state":  "CRITICAL",
+                                            "anomaly_flag":  true,
+                                            "timestamp":  "2026-05-04T10:17:06.522160+00:00",
+                                            "short_label":  "Threat"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "anomaly-1",
+                                                "stage":  "state_engine",
+                                                "state":  "CRITICAL",
+                                                "timestamp":  "2026-05-04T10:17:06.522160+00:00"
+                                            },
+                        "status":  "received_by_state_engine"
+                    }
+                ]
+}

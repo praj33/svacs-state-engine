@@ -1,0 +1,81 @@
+{
+  "captured_at": "2026-05-04",
+  "transport_decision": "HTTP push",
+  "state_engine_endpoint": {
+    "local": "http://127.0.0.1:9000/ingest/intelligence",
+    "remote_testing": "<active-ngrok-url>/ingest/intelligence",
+    "health": "<active-ngrok-url>/health",
+    "required_ngrok_header": {
+      "ngrok-skip-browser-warning": "true"
+    }
+  },
+  "nupur_signal_perception": {
+    "repo": "https://github.com/blackholeinfiverse37/svacs-demo",
+    "ingestion_endpoint": "POST /ingest/signal",
+    "trace_http_tests": {
+      "source_file": "C:/Users/Microsoft/Downloads/trace_test_results.json",
+      "run_at": "2026-04-28T16:12:47Z",
+      "total_sent": 10,
+      "passed": 10,
+      "all_unique": true,
+      "overall_pass": true
+    },
+    "trace_log_validation": {
+      "source_file": "C:/Users/Microsoft/Downloads/validate_trace_results.json",
+      "run_at": "2026-04-28T16:33:17Z",
+      "total_entries": 47,
+      "real_signal_traces": 45,
+      "test_uuids_skipped": 2,
+      "overall_pass": true,
+      "errors": []
+    },
+    "perception_phase2": {
+      "source_file": "C:/Users/Microsoft/Downloads/phase2_integration_results.json",
+      "run_at": "2026-04-28T16:10:26Z",
+      "overall_pass": true,
+      "total_passed": 5,
+      "total_tested": 5,
+      "covered_cases": [
+        "cargo",
+        "speedboat",
+        "submarine",
+        "low_confidence",
+        "anomaly"
+      ]
+    }
+  },
+  "ankita_nicai_sanskar": {
+    "integration_method": "HTTP POST push",
+    "source_endpoint_for_reference": "POST https://dumping-jingle-daylight.ngrok-free.dev/nicai/classify",
+    "auth": "not required",
+    "schema_fields": [
+      "trace_id",
+      "vessel_type",
+      "confidence",
+      "risk_level",
+      "anomaly_flag",
+      "explanation",
+      "validation_status"
+    ],
+    "validation_status_handling": "Accepted and preserved in State Engine audit logs. Not forwarded in state_event."
+  },
+  "remaining_live_proof_needed": {
+    "status": "pending paired live batch",
+    "reason": "Nupur and Ankita supplied valid evidence, but the trace_id values do not yet overlap across both handoffs.",
+    "required_cases": [
+      "cargo",
+      "speedboat",
+      "submarine",
+      "low_confidence",
+      "anomaly"
+    ],
+    "required_stages": [
+      "signal",
+      "perception",
+      "nicai",
+      "validation",
+      "intelligence",
+      "state_engine"
+    ]
+  }
+}
