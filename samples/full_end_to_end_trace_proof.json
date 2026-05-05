@@ -1,0 +1,316 @@
+﻿{
+    "captured_at":  "2026-05-05T08:34:56Z",
+    "sources":  {
+                    "nupur_signal_perception":  "C:/Users/Microsoft/Downloads/5_trace_cases.json",
+                    "state_engine_live_log":  "logs/live_bucket.jsonl"
+                },
+    "total_cases":  5,
+    "required_cases_covered":  [
+                                   "cargo",
+                                   "speedboat",
+                                   "submarine",
+                                   "low_confidence",
+                                   "anomaly"
+                               ],
+    "verified_stages":  [
+                            "signal",
+                            "perception",
+                            "intelligence",
+                            "state_engine"
+                        ],
+    "all_trace_continuity_verified":  true,
+    "all_state_mapping_verified":  true,
+    "note":  "Nupur source file is authoritative for signal/perception; State Engine live log is authoritative for intelligence/state outputs received by this repo.",
+    "results":  [
+                    {
+                        "case":  "cargo",
+                        "trace_id":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                        "signal_event":  {
+                                             "trace_id":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                             "vessel_type":  "cargo",
+                                             "timestamp":  1777966987.4550245,
+                                             "sample_rate":  4000,
+                                             "snr_db":  23.32,
+                                             "noise_floor_db":  -25.99,
+                                             "hybrid":  true,
+                                             "n_samples":  4000
+                                         },
+                        "perception_event":  {
+                                                 "trace_id":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                 "vessel_type":  "cargo",
+                                                 "confidence_score":  1.0,
+                                                 "dominant_freq_hz":  126.0,
+                                                 "anomaly_flag":  false
+                                             },
+                        "intelligence_event":  {
+                                                   "trace_id":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                   "vessel_type":  "cargo",
+                                                   "confidence":  0.6396,
+                                                   "risk_level":  "MEDIUM",
+                                                   "anomaly_flag":  false,
+                                                   "explanation":  "Moderate confidence acoustic detection â€” medium risk",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                            "vessel_type":  "cargo",
+                                            "risk_level":  "MEDIUM",
+                                            "state":  "WARNING",
+                                            "anomaly_flag":  false,
+                                            "timestamp":  "2026-05-05T07:52:38.395111+00:00",
+                                            "short_label":  "Watch"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                "stage":  "state_engine",
+                                                "state":  "WARNING",
+                                                "timestamp":  "2026-05-05T07:52:38.396615+00:00"
+                                            },
+                        "stage_trace_ids":  {
+                                                "signal":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                "perception":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                "intelligence":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                "state_event":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+                                                "state_engine_log":  "25d3f7c3-ba2a-4bc9-af02-dc3446b03189"
+                                            },
+                        "trace_continuity_verified":  true,
+                        "expected_state":  "WARNING",
+                        "state_mapping_verified":  true,
+                        "semantic_notes":  [
+
+                                           ]
+                    },
+                    {
+                        "case":  "speedboat",
+                        "trace_id":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                        "signal_event":  {
+                                             "trace_id":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                             "vessel_type":  "speedboat",
+                                             "timestamp":  1777966987.4614232,
+                                             "sample_rate":  4000,
+                                             "snr_db":  24.82,
+                                             "noise_floor_db":  -23.91,
+                                             "hybrid":  true,
+                                             "n_samples":  4000
+                                         },
+                        "perception_event":  {
+                                                 "trace_id":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                 "vessel_type":  "speedboat",
+                                                 "confidence_score":  0.3969,
+                                                 "dominant_freq_hz":  1021.0,
+                                                 "anomaly_flag":  false
+                                             },
+                        "intelligence_event":  {
+                                                   "trace_id":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                   "vessel_type":  "speedboat",
+                                                   "confidence":  0.3922,
+                                                   "risk_level":  "HIGH",
+                                                   "anomaly_flag":  false,
+                                                   "explanation":  "Low confidence acoustic detection â€” high risk",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                            "vessel_type":  "speedboat",
+                                            "risk_level":  "HIGH",
+                                            "state":  "ALERT",
+                                            "anomaly_flag":  false,
+                                            "timestamp":  "2026-05-05T07:52:39.897437+00:00",
+                                            "short_label":  "Concern"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                "stage":  "state_engine",
+                                                "state":  "ALERT",
+                                                "timestamp":  "2026-05-05T07:52:39.897437+00:00"
+                                            },
+                        "stage_trace_ids":  {
+                                                "signal":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                "perception":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                "intelligence":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                "state_event":  "756f9f06-f904-4315-99f1-5506f98c8868",
+                                                "state_engine_log":  "756f9f06-f904-4315-99f1-5506f98c8868"
+                                            },
+                        "trace_continuity_verified":  true,
+                        "expected_state":  "ALERT",
+                        "state_mapping_verified":  true,
+                        "semantic_notes":  [
+
+                                           ]
+                    },
+                    {
+                        "case":  "submarine",
+                        "trace_id":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                        "signal_event":  {
+                                             "trace_id":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                             "vessel_type":  "submarine",
+                                             "timestamp":  1777966987.4636762,
+                                             "sample_rate":  4000,
+                                             "snr_db":  15.88,
+                                             "noise_floor_db":  -34.1,
+                                             "hybrid":  true,
+                                             "n_samples":  4000
+                                         },
+                        "perception_event":  {
+                                                 "trace_id":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                 "vessel_type":  "unknown",
+                                                 "confidence_score":  0.358,
+                                                 "dominant_freq_hz":  33.0,
+                                                 "anomaly_flag":  true
+                                             },
+                        "intelligence_event":  {
+                                                   "trace_id":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                   "vessel_type":  "submarine",
+                                                   "confidence":  0.1734,
+                                                   "risk_level":  "CRITICAL",
+                                                   "anomaly_flag":  true,
+                                                   "explanation":  "Anomalous acoustic pattern detected",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                            "vessel_type":  "submarine",
+                                            "risk_level":  "CRITICAL",
+                                            "state":  "CRITICAL",
+                                            "anomaly_flag":  true,
+                                            "timestamp":  "2026-05-05T07:52:41.366566+00:00",
+                                            "short_label":  "Threat"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                "stage":  "state_engine",
+                                                "state":  "CRITICAL",
+                                                "timestamp":  "2026-05-05T07:52:41.366566+00:00"
+                                            },
+                        "stage_trace_ids":  {
+                                                "signal":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                "perception":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                "intelligence":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                "state_event":  "2466c4aa-fefe-433b-b97b-d39dd99f0568",
+                                                "state_engine_log":  "2466c4aa-fefe-433b-b97b-d39dd99f0568"
+                                            },
+                        "trace_continuity_verified":  true,
+                        "expected_state":  "CRITICAL",
+                        "state_mapping_verified":  true,
+                        "semantic_notes":  [
+                                               "perception_vessel_type differs from signal_vessel_type: signal=submarine, perception=unknown"
+                                           ]
+                    },
+                    {
+                        "case":  "low_confidence",
+                        "trace_id":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                        "signal_event":  {
+                                             "trace_id":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                             "vessel_type":  "unknown",
+                                             "timestamp":  1777966987.4656947,
+                                             "sample_rate":  4000,
+                                             "snr_db":  17.25,
+                                             "noise_floor_db":  -19.57,
+                                             "hybrid":  true,
+                                             "n_samples":  4000
+                                         },
+                        "perception_event":  {
+                                                 "trace_id":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                 "vessel_type":  "unknown",
+                                                 "confidence_score":  0.0251,
+                                                 "dominant_freq_hz":  325.0,
+                                                 "anomaly_flag":  true
+                                             },
+                        "intelligence_event":  {
+                                                   "trace_id":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                   "vessel_type":  "unknown",
+                                                   "confidence":  0.2,
+                                                   "risk_level":  "HIGH",
+                                                   "anomaly_flag":  false,
+                                                   "explanation":  "Low confidence detection",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                            "vessel_type":  "unknown",
+                                            "risk_level":  "HIGH",
+                                            "state":  "ALERT",
+                                            "anomaly_flag":  false,
+                                            "timestamp":  "2026-05-05T07:52:42.816648+00:00",
+                                            "short_label":  "Concern"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                "stage":  "state_engine",
+                                                "state":  "ALERT",
+                                                "timestamp":  "2026-05-05T07:52:42.816648+00:00"
+                                            },
+                        "stage_trace_ids":  {
+                                                "signal":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                "perception":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                "intelligence":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                "state_event":  "fb381325-4292-4483-b66a-b55aa37a2fd2",
+                                                "state_engine_log":  "fb381325-4292-4483-b66a-b55aa37a2fd2"
+                                            },
+                        "trace_continuity_verified":  true,
+                        "expected_state":  "ALERT",
+                        "state_mapping_verified":  true,
+                        "semantic_notes":  [
+                                               "intelligence_anomaly_flag differs from perception_anomaly_flag: perception=True, intelligence=False"
+                                           ]
+                    },
+                    {
+                        "case":  "anomaly",
+                        "trace_id":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                        "signal_event":  {
+                                             "trace_id":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                             "vessel_type":  "anomaly",
+                                             "timestamp":  1777966987.4688246,
+                                             "sample_rate":  4000,
+                                             "snr_db":  21.12,
+                                             "noise_floor_db":  -22.31,
+                                             "hybrid":  true,
+                                             "n_samples":  4000
+                                         },
+                        "perception_event":  {
+                                                 "trace_id":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                 "vessel_type":  "unknown",
+                                                 "confidence_score":  0.1426,
+                                                 "dominant_freq_hz":  1941.0,
+                                                 "anomaly_flag":  true
+                                             },
+                        "intelligence_event":  {
+                                                   "trace_id":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                   "vessel_type":  "unknown",
+                                                   "confidence":  0.02,
+                                                   "risk_level":  "CRITICAL",
+                                                   "anomaly_flag":  true,
+                                                   "explanation":  "Anomalous acoustic pattern detected",
+                                                   "validation_status":  "ALLOW"
+                                               },
+                        "state_event":  {
+                                            "trace_id":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                            "vessel_type":  "unknown",
+                                            "risk_level":  "CRITICAL",
+                                            "state":  "CRITICAL",
+                                            "anomaly_flag":  true,
+                                            "timestamp":  "2026-05-05T07:52:44.253650+00:00",
+                                            "short_label":  "Threat"
+                                        },
+                        "state_stage_log":  {
+                                                "trace_id":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                "stage":  "state_engine",
+                                                "state":  "CRITICAL",
+                                                "timestamp":  "2026-05-05T07:52:44.253650+00:00"
+                                            },
+                        "stage_trace_ids":  {
+                                                "signal":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                "perception":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                "intelligence":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                "state_event":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac",
+                                                "state_engine_log":  "193f1e6c-d403-4bff-bbe4-9d4a7183d2ac"
+                                            },
+                        "trace_continuity_verified":  true,
+                        "expected_state":  "CRITICAL",
+                        "state_mapping_verified":  true,
+                        "semantic_notes":  [
+                                               "perception_vessel_type differs from signal_vessel_type: signal=anomaly, perception=unknown"
+                                           ]
+                    }
+                ]
+}

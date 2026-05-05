@@ -55,6 +55,13 @@ def _make_event(**overrides) -> IntelligenceEvent:
     return IntelligenceEvent(**defaults)
 
 
+def _dump_model(model):
+    dump = getattr(model, "model_dump", None)
+    if callable(dump):
+        return dump(mode="json")
+    return model.dict()
+
+
 @pytest.mark.parametrize(
     ("risk_level", "expected_state", "expected_label"),
     [
@@ -81,7 +88,7 @@ def test_state_event_contract_is_ui_safe(engine):
     """state_event should only expose the stable downstream fields."""
     result = engine.process(_make_event())
 
-    assert set(result.model_dump(mode="json")) == {
+    assert set(_dump_model(result)) == {
         "trace_id",
         "vessel_type",
         "risk_level",

@@ -1,5 +1,5 @@
 {
-  "captured_at": "2026-05-04",
+  "captured_at": "2026-05-05",
   "transport_decision": "HTTP push",
   "state_engine_endpoint": {
     "local": "http://127.0.0.1:9000/ingest/intelligence",
@@ -59,17 +59,18 @@
     ],
     "validation_status_handling": "Accepted and preserved in State Engine audit logs. Not forwarded in state_event."
   },
-  "remaining_live_proof_needed": {
-    "status": "pending paired live batch",
-    "reason": "Nupur and Ankita supplied valid evidence, but the trace_id values do not yet overlap across both handoffs.",
-    "required_cases": [
+  "final_live_proof": {
+    "status": "completed",
+    "artifact": "samples/full_end_to_end_trace_proof.json",
+    "reason": "Nupur and Ankita completed a shared batch with matching trace IDs across the final handoff.",
+    "covered_cases": [
       "cargo",
       "speedboat",
       "submarine",
       "low_confidence",
       "anomaly"
     ],
-    "required_stages": [
+    "verified_stages": [
       "signal",
       "perception",
       "nicai",

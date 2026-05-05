@@ -2,7 +2,7 @@
 
 ## Date
 
-2026-05-04
+2026-05-05
 
 ## Objective
 
@@ -70,7 +70,7 @@ Convert `intelligence_event` into a stable, deterministic `state_event` without 
 - `samples/upstream_readiness_summary.json`
   - summarizes Nupur's signal/perception proof files
   - records Ankita's intelligence schema and HTTP push method
-  - states the exact remaining paired-live-batch requirement
+  - points to the completed final live proof artifact
 - `samples/live_http_state_engine_results.json`
   - live HTTP requests received from Ankita's NICAI/Sanskar layer
   - captured request `intelligence_event`
@@ -79,6 +79,10 @@ Convert `intelligence_event` into a stable, deterministic `state_event` without 
 - `samples/ankita_trace_continuity_proof.json`
   - verifies Ankita's trace proof against the State Engine live log
   - covers perception, validation, intelligence, and state_engine stages
+- `samples/full_end_to_end_trace_proof.json`
+  - verifies final shared trace IDs across signal, perception, intelligence, state_event, and state_engine log
+  - covers cargo, speedboat, submarine, low confidence, and anomaly
+  - confirms deterministic State Engine mapping for all 5 live cases
 - `samples/state_engine_runs.json`
   - full staged pipeline fixtures
   - input `intelligence_event`
@@ -102,6 +106,8 @@ Convert `intelligence_event` into a stable, deterministic `state_event` without 
   - latest test execution output
 - `LIVE_INTEGRATION_CHECKLIST.md`
   - step-by-step runbook for the live HTTP test with Ankita
+- `LEARNING_KIT.md`
+  - mandatory learning keywords, readings, prompts, and applied notes
 
 ## Verification
 
@@ -134,7 +140,7 @@ Nupur's upstream evidence has been received and checked:
 - `trace_test_results.json`: 10/10 trace IDs matched, all unique
 - `phase2_integration_results.json`: 5/5 perception cases passed
 
-Ankita's live State Engine test has been received and checked:
+Ankita's first live State Engine test has been received and checked:
 
 - 5/5 `intelligence_event` posts returned HTTP 200
 - State Engine audit log contains the live traces:
@@ -148,9 +154,17 @@ Ankita's live State Engine test has been received and checked:
 
 ## Trace Continuity Proof
 
-Every exported scenario in `samples/trace_continuity_proof.json` shows the same `trace_id` across all five stages with `status: "verified"`.
+Final shared-batch proof is exported in `samples/full_end_to_end_trace_proof.json`.
 
-Live end-to-end continuity proof is verified for Ankita's `perception -> validation -> intelligence -> state_engine` handoff based on her trace report and State Engine logs. Full team-level `signal -> perception -> NICAI -> validation -> intelligence -> state_engine` proof still requires Nupur and Ankita to provide one shared paired batch with matching trace IDs across both upstream components.
+Final shared trace IDs verified:
+
+- `25d3f7c3-ba2a-4bc9-af02-dc3446b03189 -> WARNING`
+- `756f9f06-f904-4315-99f1-5506f98c8868 -> ALERT`
+- `2466c4aa-fefe-433b-b97b-d39dd99f0568 -> CRITICAL`
+- `fb381325-4292-4483-b66a-b55aa37a2fd2 -> ALERT`
+- `193f1e6c-d403-4bff-bbe4-9d4a7183d2ac -> CRITICAL`
+
+Result: `all_trace_continuity_verified=true` and `all_state_mapping_verified=true`.
 
 ## Explicit Failure Behavior
 
@@ -160,4 +174,4 @@ Live end-to-end continuity proof is verified for Ankita's `perception -> validat
 
 ## Local Integration Assumption
 
-This repository contains the State Engine slice, not the live upstream `signal`, `perception`, `NICAI`, or `Sanskar` services. The State Engine now has an HTTP receiver for live `intelligence_event` push, but one paired batch is still needed where Nupur and Ankita produce matching trace IDs across all stages.
+This repository contains the State Engine slice, not the live upstream `signal`, `perception`, `NICAI`, or `Sanskar` services. The final shared live batch was verified using Nupur's exported signal/perception file and the State Engine live HTTP audit log.
