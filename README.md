@@ -2,21 +2,30 @@
 
 Deterministic backend layer that converts `intelligence_event` into a stable `state_event` for UI and Mitra consumption.
 
-## Pipeline Position
+## Final Pipeline
 
 ```text
-signal -> perception -> NICAI -> Sanskar -> State Engine -> Bucket -> InsightFlow -> UI/Mitra
+signal -> perception -> NICAI -> validation -> intelligence -> state_engine -> UI/Mitra
 ```
+
+Final shared-batch proof is complete for 5 cases:
+
+```text
+cargo, speedboat, submarine, low confidence, anomaly
+```
+
+The proof artifact is `samples/full_end_to_end_trace_proof.json`.
 
 ## Responsibility Boundary
 
-- Accept the upstream `intelligence_event` unchanged.
+- Accept upstream `intelligence_event` payloads.
 - Preserve the incoming `trace_id`; never generate a new one.
-- Map `risk_level` into a deterministic system `state`.
+- Map `risk_level` into deterministic system `state`.
 - Force `state=CRITICAL` when `anomaly_flag=True`.
 - Emit a minimal downstream `state_event`.
+- Preserve extra upstream fields such as `validation_status` in audit logs only.
 
-The State Engine does not rewrite upstream explanation text and does not generate user-facing explanation.
+The State Engine does not rewrite upstream explanation text and does not generate user-facing explanation. Mitra remains the explanation layer.
 
 ## Contracts
 
@@ -24,82 +33,7 @@ The State Engine does not rewrite upstream explanation text and does not generat
 
 ```json
 {
-  "trace_id": "TRACE-001",
-  "vessel_type": "cargo",
-  "confidence": 0.94,
-  "risk_level": "LOW",
-  "anomaly_flag": false,
-  "explanation": "Routine cargo route with no hostile indicators."
-}
-```
-
-### Output: `state_event`
-
-```json
-{
-  "trace_id": "TRACE-001",
-  "vessel_type": "cargo",
-  "risk_level": "LOW",
-  "state": "NORMAL",
-  "anomaly_flag": false,
-  "timestamp": "2026-04-29T00:00:00+00:00",
-  "short_label": "Safe"
-}
-```
-
-## Locked Mapping
-
-| `risk_level` | `state` |
-|---|---|
-| `LOW` | `NORMAL` |
-| `MEDIUM` | `WARNING` |
-| `HIGH` | `ALERT` |
-| `CRITICAL` | `CRITICAL` |
-
-Override rule:
-
-```text
-anomaly_flag=True -> state=CRITICAL
-```
-
-## Files
-
-| File | Responsibility |
-|---|---|
-| `state_engine.py` | Deterministic mapping from intelligence to state |
-| `trace_validator.py` | Explicit trace validation and continuity enforcement |
-| `bucket_logger.py` | Append-only JSONL audit logs |
-| `schemas/state_event.py` | Pydantic contracts for input/output/log entries |
-| `main.py` | Five-scenario integration demo and sample export |
-| `tests/test_state_engine.py` | Locked mapping, trace, and logging tests |
-
-## Quick Start
-
-```bash
-pip install -r requirements.txt
-python main.py
-pytest tests/ -v
-```
-
-## Live HTTP Intake
-
-Run the State Engine receiver:
-
-```bash
-uvicorn api_server:app --host 0.0.0.0 --port 9000
-```
-
-Upstream NICAI/Sanskar can push live intelligence output here:
-
-```text
-POST http://localhost:9000/ingest/intelligence
-```
-
-Expected request body:
-
-```json
-{
-  "trace_id": "9d6dc7d6-d915-4738-a3bf-f20c78f6780b",
+  "trace_id": "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
   "vessel_type": "cargo",
   "confidence": 0.6396,
   "risk_level": "MEDIUM",
@@ -109,16 +43,135 @@ Expected request body:
 }
 ```
 
-The response is the deterministic `state_event`. Extra upstream fields such as `validation_status` are preserved in audit logs, but are not forwarded to UI/Mitra state output.
+Required fields:
 
-Running `python main.py` exports:
+- `trace_id`
+- `vessel_type`
+- `confidence`
+- `risk_level`
+- `anomaly_flag`
+- `explanation`
 
-- `samples/state_engine_runs.json`
-- `samples/trace_continuity_proof.json`
-- `samples/bucket_logs.jsonl`
+Accepted upstream extras:
+
+- `validation_status`
+
+### Output: `state_event`
+
+```json
+{
+  "trace_id": "25d3f7c3-ba2a-4bc9-af02-dc3446b03189",
+  "vessel_type": "cargo",
+  "risk_level": "MEDIUM",
+  "state": "WARNING",
+  "anomaly_flag": false,
+  "timestamp": "2026-05-05T07:52:38.395111+00:00",
+  "short_label": "Watch"
+}
+```
+
+## Locked Mapping
+
+| `risk_level` | `state` | `short_label` |
+|---|---|---|
+| `LOW` | `NORMAL` | `Safe` |
+| `MEDIUM` | `WARNING` | `Watch` |
+| `HIGH` | `ALERT` | `Concern` |
+| `CRITICAL` | `CRITICAL` | `Threat` |
+
+Override rule:
+
+```text
+anomaly_flag=True -> state=CRITICAL
+```
+
+No other state logic is allowed.
+
+## Live HTTP Intake
+
+Run the State Engine receiver:
+
+```bash
+uvicorn api_server:app --host 0.0.0.0 --port 9000
+```
+
+Local endpoint:
+
+```text
+POST http://localhost:9000/ingest/intelligence
+```
+
+Remote testing through ngrok:
+
+```text
+POST <active-ngrok-url>/ingest/intelligence
+```
+
+Recommended ngrok header:
+
+```text
+ngrok-skip-browser-warning: true
+```
+
+Health check:
+
+```text
+GET /health
+```
+
+## Artifacts
+
+| Artifact | Purpose |
+|---|---|
+| `samples/full_end_to_end_trace_proof.json` | Final shared trace proof from signal through State Engine |
+| `samples/live_http_state_engine_results.json` | Live HTTP requests and returned state outputs |
+| `samples/ankita_trace_continuity_proof.json` | Ankita handoff proof against State Engine logs |
+| `samples/upstream_readiness_summary.json` | Nupur and Ankita integration readiness summary |
+| `samples/state_engine_runs.json` | Staged demo outputs |
+| `samples/trace_continuity_proof.json` | Staged trace continuity proof |
+| `samples/bucket_logs.jsonl` | Sample append-only audit logs |
+| `logs/live_bucket.jsonl` | Local live audit log generated by the HTTP receiver |
+| `REVIEW_PACKET.md` | Final delivery packet |
+| `LEARNING_KIT.md` | Required learning-kit notes |
+| `LIVE_INTEGRATION_CHECKLIST.md` | Live test runbook |
+
+## Verification
+
+```bash
+python -m pytest tests -v
+```
+
+Latest result:
+
+```text
+20 passed
+```
+
+Final proof summary from `samples/full_end_to_end_trace_proof.json`:
+
+```json
+{
+  "total_cases": 5,
+  "all_trace_continuity_verified": true,
+  "all_state_mapping_verified": true
+}
+```
+
+## Files
+
+| File | Responsibility |
+|---|---|
+| `state_engine.py` | Deterministic mapping from intelligence to state |
+| `api_server.py` | Live HTTP receiver for upstream intelligence events |
+| `trace_validator.py` | Explicit trace validation and continuity helpers |
+| `bucket_logger.py` | Append-only JSONL audit logging |
+| `schemas/state_event.py` | Pydantic contracts for input, output, and logs |
+| `main.py` | Five-scenario demo and sample export |
+| `tests/test_state_engine.py` | Mapping, trace, and logging tests |
+| `tests/test_api_server.py` | HTTP intake tests |
 
 ## Failure Policy
 
 - Invalid or missing `trace_id` raises an explicit error after logging `trace_error`.
-- Any trace mismatch across the pipeline raises an explicit error.
-- No silent failures.
+- Trace mismatch checks fail loudly instead of silently passing.
+- `state_event` remains stable and UI-safe.
